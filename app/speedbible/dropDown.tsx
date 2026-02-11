@@ -7,7 +7,7 @@ export default function DropDown({ val, options, setValue, mode }:any) {
     const [openName, setOpenName] = useState("Version");
     const [cssMode, setCssMode] = useState("hidden");
 
-    function changeOption(data:any){
+    function changeOption(data:any, iteration:any = null){
       setIsOpen(false);
       if(mode == 0){
         setOpenName(data.localized_abbreviation)
@@ -15,12 +15,11 @@ export default function DropDown({ val, options, setValue, mode }:any) {
       }
       if(mode == 1){
         setOpenName(data.title)
-        setValue(data.id);
+        setValue(iteration);
       }
       if(mode == 2){
         setOpenName("Chapter "+data.id)
-        console.log(data)
-        // setValue(data.id);
+        setValue(data.id);
       }
       if(mode == 3){
         setOpenName("Verse "+data.id)
@@ -69,9 +68,9 @@ export default function DropDown({ val, options, setValue, mode }:any) {
         <button className="sb-item" style={{  }}>{openName}</button>
         
         <div className={`scrollContainer sb-menu ${isOpen ? "is-open" : ""}`}>
-          {options?.map((item: any) => (
+          {options?.map((item: any, iteration:any) => (
 
-            <button key={item.id} className="sb-item" onClick={()=>{changeOption(item)}}>
+            <button key={item.id} className="sb-item" onClick={()=>{changeOption(item, iteration)}}>
               {
                   (
                       {

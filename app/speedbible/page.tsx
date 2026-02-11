@@ -18,13 +18,18 @@ export default function SpeedRead() {
 
 	const wordFeed = useRef([]) as any;
 	const [wordFeedTrigger, triggerWordFeed] = useState(0);
+	const [currentWordTrigger, triggerCurrentWord] = useState(0);
 	const wordNumber = useRef(0);
+	const goNextChapter = useRef(false);
 
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [showAim, setShowAim] = useState(false);
 	const [showBionic, setShowBionic] = useState(true);
 	const [showRed, setShowRed] = useState(true);
 	const [showSideView, setShowSideView] = useState(true);
+
+	const bionicRef = useRef(showBionic);
+	const redRef = useRef(showRed);
 
 	const [currentWord, setCurrentWord] = useState("");
 	const [versions, setVersions] = useState(null);
@@ -48,6 +53,8 @@ export default function SpeedRead() {
 	function displayWord(word:string){
 		if(wordContainer.current){
 			setCurrentWord(word);
+			triggerCurrentWord((prev)=>{return (prev+1)%2});
+
 			wordContainer.current.style.transform = ``;
 			wordContainer.current.replaceChildren();
 
@@ -61,11 +68,11 @@ export default function SpeedRead() {
 			for (let i = 0; i < word.length; i++) {
 				const span = document.createElement('span');
 				span.textContent = `${word[i]}`;
-
-				if (i < boldLimit && showBionic) span.style.fontWeight = 'bold';
+				
+				if (i < boldLimit && bionicRef.current) span.style.fontWeight = 'bold';
 
 				if (i==centerLetter) {
-					if(showRed) span.style.color = 'red';
+					if(redRef.current) span.style.color = 'red';
 					centerSpan = span;
 				}
 				wordContainer.current.appendChild(span);
@@ -82,33 +89,41 @@ export default function SpeedRead() {
 
 	function feedData(){
 		if(nextTimeOut.current) clearTimeout(nextTimeOut.current);
+		goNextChapter.current = false;
 		if(wordContainer.current && wordFeed.current.length > 0 && wordNumber.current < wordFeed.current.length){
-		let word = wordFeed.current[wordNumber.current];
-		wordNumber.current++;
+			let word = wordFeed.current[wordNumber.current];
+			displayWord(word);
+			wordNumber.current++;
 
+			let waitTime = 100;
+			waitTime+=word.length*30;
+			if(word.match(/[.,?!]/))
+				waitTime*=1.5;
 
-		displayWord(word);
-
-		let waitTime = 100;
-		waitTime+=word.length*30;
-		if(word.match(/[.,?!]/))
-			waitTime*=1.5;
-
-		if(wordFeed.current.length == 0)
-			setIsPlaying(false);
-		else
-			nextTimeOut.current = setTimeout(function(){
-			feedData();
-			},waitTime);
+			if(wordFeed.current.length == 0)
+				setIsPlaying(false);
+			else
+				nextTimeOut.current = setTimeout(function(){
+					feedData();
+				},waitTime);
+		}else{
+			if(currentChapter < currentChapters[currentChapters.length-1].id){
+				setCurrentChapter((prev)=>{return Number(prev)+1});
+				goNextChapter.current = true;
+			}
 		}
 	}
 
 	const loadChapterData = async () => {
 		if(!currentVersion || !currentBooks || currentBooks.length==0 || currentBook == undefined) return;
+		wordNumber.current = 0;
+		setIsPlaying(false);
 		const data = await getPassage(currentVersion, currentBooks[currentBook].id, currentChapter, undefined);
 		if(data){
 			setPassageData(data.content);
 			populateFeed(data.content);
+			if(goNextChapter.current==true)
+				feedData();
 		}
 	}
 
@@ -148,6 +163,14 @@ export default function SpeedRead() {
 		return () => clearTimeout(nextTimeOut.current!);
 	}, []);
 
+	useEffect(()=>{
+		const handleKeyDown = (e:any) => {
+			if (e.key === " ") setIsPlaying(prev => !prev);
+		};
+    	window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isPlaying]);
+
   	useEffect(()=>{
 	if (aimBox.current)
 		if(showAim)
@@ -157,6 +180,8 @@ export default function SpeedRead() {
   	},[showAim])
 
    	useEffect(()=>{
+		redRef.current = showRed;
+		bionicRef.current = showBionic;
 		displayWord(currentWord);
   	},[showRed, showBionic])
 
@@ -176,12 +201,15 @@ export default function SpeedRead() {
 	useEffect(()=>{
 		if(currentBooks.length!=0){
 			setCurrentChapters(currentBooks[currentBook].chapters);
+			wordNumber.current = 0;
+			setIsPlaying(false);
 		}
-	},[currentBooks])
+	},[currentBooks, currentBook])
 
 	useEffect(()=>{
 		if(currentBooks.length!=0 && currentBooks.length!=0 && currentChapters.length!=0)
 			setCurrentVerses(currentBooks[currentBook].chapters[currentChapter].verses);
+		
 	}, [currentChapters])
 
 	useEffect(()=>{
@@ -203,7 +231,7 @@ export default function SpeedRead() {
 			chapterVal={currentChapter} chapter={currentChapters} setChapter={(val:any)=>setCurrentChapter(val)}
 			verseVal={currentVerse} verse={currentVerses} setVerse={(val:any)=>setCurrentVerse(val)}
 		/>
-		<SideReader val={showSideView} wordList={wordFeed} wordNumber={wordNumber} trigger={wordFeedTrigger}/>
+		<SideReader val={showSideView} wordList={wordFeed} wordNumber={wordNumber} feedTrigger={wordFeedTrigger} wordTrigger={currentWordTrigger}/>
 
 		<div className="checkContainer">
 			<CheckBox name={"Red"} i={0} checked={true} onToggle={(val: boolean) => setShowRed(val)}/>

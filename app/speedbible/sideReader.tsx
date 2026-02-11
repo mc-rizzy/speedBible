@@ -2,19 +2,19 @@ import './speedbible.css'
 import './sideReader.css'
 import { useEffect, useRef, useState } from 'react';
 
-export default function SideReader({val, wordList, wordNumber, trigger}:any) {
+export default function SideReader({ val, wordList, wordNumber, feedTrigger, wordTrigger }:any) {
 
     const textContainer = useRef<HTMLDivElement>(null);
     const containerContainer = useRef<HTMLDivElement>(null);
-    const [parsedData, setParsedData] = useState([]);
+    const previousWord = useRef(null) as any;
 
     useEffect(()=>{
-        // console.log(chapterContent)
         fillSidebar(wordList);
-        // setInterval(function(){
-        //     console.log(chapterContent)
-        // },500)
-    }, [trigger]);
+    }, [feedTrigger]);
+
+    useEffect(()=>{
+        updateWord();
+    }, [wordTrigger]);
 
     useEffect(()=>{
         if(textContainer.current)
@@ -46,8 +46,16 @@ export default function SideReader({val, wordList, wordNumber, trigger}:any) {
         if(containerContainer.current) containerContainer.current.style.opacity="1";
     }
 
-    function highlightWord(){
-        let thing = textContainer.current?.children[wordNumber].classList;
+    function updateWord(){
+        if(previousWord.current!=null){
+            let el = textContainer.current?.children[previousWord.current];
+            el?.classList.add('readWord');
+            el?.classList.remove('currentWord');
+        }
+
+        let el = textContainer.current?.children[wordNumber.current-1];
+        el?.classList.add('currentWord');
+        previousWord.current = wordNumber.current-1;
     }
 
     return (
