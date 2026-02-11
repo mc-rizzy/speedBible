@@ -2,11 +2,12 @@ import './speedbible.css'
 import './sideReader.css'
 import { useEffect, useRef, useState } from 'react';
 
-export default function SideReader({ val, wordList, wordNumber, feedTrigger, wordTrigger }:any) {
+export default function SideReader({ val, wordList, wordNumber, feedTrigger, wordTrigger, setWord }:any) {
 
     const textContainer = useRef<HTMLDivElement>(null);
     const containerContainer = useRef<HTMLDivElement>(null);
     const previousWord = useRef(null) as any;
+    const wordOffset = useRef(-1) as any;
 
     useEffect(()=>{
         fillSidebar(wordList);
@@ -31,15 +32,13 @@ export default function SideReader({ val, wordList, wordNumber, feedTrigger, wor
 
         for (let i = 0; i < passage.current.length; i++) {
             const span = document.createElement('span');
+            span.onclick = () => {
+                wordNumber.current = i;
+                setWord();
+                wordOffset.current = 0;
+            }
             span.className = 'singleWord';
             span.textContent = `${passage.current[i]}`;
-
-            // if (i < boldLimit && showBionic) span.style.fontWeight = 'bold';
-
-            // if (i==centerLetter) {
-            //     if(showRed) span.style.color = 'red';
-            //     centerSpan = span;
-            // }
             textContainer.current.appendChild(span);
         }
 
@@ -53,9 +52,11 @@ export default function SideReader({ val, wordList, wordNumber, feedTrigger, wor
             el?.classList.remove('currentWord');
         }
 
-        let el = textContainer.current?.children[wordNumber.current-1];
+        let el = textContainer.current?.children[wordNumber.current+wordOffset.current];
         el?.classList.add('currentWord');
-        previousWord.current = wordNumber.current-1;
+        previousWord.current = wordNumber.current+wordOffset.current;
+
+        wordOffset.current = -1;
     }
 
     return (

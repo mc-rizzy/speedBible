@@ -165,6 +165,7 @@ export default function SpeedRead() {
 
 	useEffect(()=>{
 		const handleKeyDown = (e:any) => {
+			e.preventDefault();
 			if (e.key === " ") setIsPlaying(prev => !prev);
 		};
     	window.addEventListener('keydown', handleKeyDown);
@@ -231,7 +232,8 @@ export default function SpeedRead() {
 			chapterVal={currentChapter} chapter={currentChapters} setChapter={(val:any)=>setCurrentChapter(val)}
 			verseVal={currentVerse} verse={currentVerses} setVerse={(val:any)=>setCurrentVerse(val)}
 		/>
-		<SideReader val={showSideView} wordList={wordFeed} wordNumber={wordNumber} feedTrigger={wordFeedTrigger} wordTrigger={currentWordTrigger}/>
+		<SideReader val={showSideView} wordList={wordFeed} wordNumber={wordNumber} feedTrigger={wordFeedTrigger} wordTrigger={currentWordTrigger}
+		setWord={()=>{ displayWord(wordFeed.current[wordNumber.current]);} }/>
 
 		<div className="checkContainer">
 			<CheckBox name={"Red"} i={0} checked={true} onToggle={(val: boolean) => setShowRed(val)}/>
